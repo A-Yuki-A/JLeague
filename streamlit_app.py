@@ -63,13 +63,6 @@ uploaded = st.sidebar.file_uploader(
     "Excel（.xlsx）または CSV（.csv）を選んでください", type=["xlsx", "csv"]
 )
 
-# グラフサイズと点サイズの設定（ユーザー調整可能）
-st.sidebar.header("グラフ表示設定")
-fig_w = st.sidebar.slider("図の横幅（インチ換算）", min_value=3.0, max_value=10.0, value=5.0, step=0.5)
-fig_h = st.sidebar.slider("図の縦幅（インチ換算）", min_value=2.0, max_value=8.0, value=3.5, step=0.5)
-marker_size = st.sidebar.slider("点の大きさ", min_value=5, max_value=80, value=24, step=1)
-alpha = st.sidebar.slider("点の透明度", min_value=0.1, max_value=1.0, value=0.85, step=0.05)
-
 df = None
 if uploaded is not None:
     file_name = uploaded.name.lower()
@@ -88,6 +81,7 @@ if df is not None:
     st.subheader("読み込んだデータ（スクロールで全体を確認できます）")
     st.dataframe(df, use_container_width=True, height=360)
 
+    # 数値列の抽出
     numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
     if len(numeric_cols) == 0:
         st.warning("数値列が見つかりませんでした。数値データを含むファイルを読み込んでください。")
@@ -117,8 +111,9 @@ if df is not None:
                     r_value = reg.rvalue
                     r2 = r_value ** 2
 
-                    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-                    ax.scatter(x, y, s=marker_size, alpha=alpha)
+                    # 固定の適切サイズで描画（大きすぎない）
+                    fig, ax = plt.subplots(figsize=(5.2, 3.6))
+                    ax.scatter(x, y, s=22, alpha=0.85)
                     xx = np.linspace(np.min(x), np.max(x), 200)
                     yy = slope * xx + intercept
                     ax.plot(xx, yy)
@@ -130,34 +125,46 @@ if df is not None:
                     ax.text(0.02, 0.98, eq_text, transform=ax.transAxes, ha="left", va="top",
                             bbox=dict(boxstyle='round', alpha=0.1))
 
-                    st.pyplot(fig, use_container_width=True)
+                    st.pyplot(fig, use_container_width=False)
 
-        # ---------------- 散布図行列（相関行列の代わり） ----------------
+        # ---------------- 散布図行列 ----------------
         with tab2:
             st.markdown("**散布図行列に含める変数に☑してください**（数値列のみ表示）。")
             default_cols = numeric_cols[:min(4, len(numeric_cols))]
-            selected_cols = st.multiselect("散布図行列に入れる列を選択（2〜8列程度を推奨）",
-                                           options=numeric_cols, default=default_cols)
+            selected_cols = st.multiselect(
+                "散布図行列に入れる列を選択（2〜8列程度を推奨）",
+                options=numeric_cols, default=default_cols
+            )
 
             if len(selected_cols) >= 2:
-                cell_size = st.slider("セル一辺（インチ換算）", 1.5, 3.5, 2.0, 0.1)
-                n = len(selected_cols)
-                fig_size = (cell_size * n, cell_size * n)
-
                 plot_df = df[selected_cols].dropna().astype(float)
                 if len(plot_df) < 2:
                     st.warning("有効なデータ点が少なすぎます。別の列を選んでください。")
                 else:
-                    fig = plt.figure(figsize=fig_size)
-                    axs = scatter_matrix(plot_df, figsize=fig_size, diagonal='hist', alpha=0.7, s=marker_size/2.0)
-                    for i, col in enumerate(selected_cols):
-                        for j in range(len(selected_cols)):
-                            ax = axs[i, j]
-                            if i == len(selected_cols) - 1:
-                                ax.set_xlabel(selected_cols[j])
+                    n = len(selected_cols)
+                    # 列数に応じてセルサイズを自動調整（大きすぎないように）
+                    if n <= 3:
+                        cell = 2.2
+                    elif n <= 5:
+                        cell = 1.9
+                    else:
+                        cell = 1.6  # 6列以上はコンパクトに
+                    fig_w, fig_h = cell * n, cell * n
+
+                    fig, axs = plt.subplots(n, n, figsize=(fig_w, fig_h))
+                    axes = scatter_matrix(
+                        plot_df, ax=axs, diagonal='hist', alpha=0.7, s=16
+                    )
+                    # ラベル（日本語フォント反映）
+                    for i, row_name in enumerate(selected_cols):
+                        for j, col_name in enumerate(selected_cols):
+                            ax = axes[i, j]
+                            if i == n - 1:
+                                ax.set_xlabel(col_name, fontsize=9)
                             if j == 0:
-                                ax.set_ylabel(col)
-                    st.pyplot(fig, use_container_width=True)
+                                ax.set_ylabel(row_name, fontsize=9)
+                    plt.tight_layout(pad=0.6)
+                    st.pyplot(fig, use_container_width=False)
             else:
                 st.info("2つ以上の列を選ぶと散布図行列を表示します。")
 else:
