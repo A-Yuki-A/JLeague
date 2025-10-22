@@ -104,13 +104,13 @@ if df is not None:
                     xx = np.linspace(np.min(x), np.max(x), 200)
                     yy = slope * xx + intercept
                     ax.plot(xx, yy)
-                    ax.set_xlabel(f"{feature_col}（説明変数：横軸）")
-                    ax.set_ylabel(f"{target_col}（目的変数：縦軸）")
+                    ax.set_xlabel(f"{feature_col}")
+                    ax.set_ylabel(f"{target_col}")
                     ax.set_title("散布図と回帰直線")
                     st.pyplot(fig, use_container_width=False)
 
-                    # --- 散布図の下に、回帰情報を表示 ---
-                    st.markdown("#### 回帰の結果（散布図の下に表示）")
+                    # --- 回帰情報を表示 ---
+                    st.markdown("#### 回帰の結果")
                     st.write(f"- 回帰式：  **y = {slope:.4g} × x + {intercept:.4g}**")
                     st.write(f"- 相関係数 r： **{r_value:.4f}**")
                     st.write(f"- 決定係数 R²： **{r2:.4f}**")
