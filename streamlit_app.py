@@ -21,8 +21,8 @@ def setup_japanese_font():
 setup_japanese_font()
 
 # ---------------- 基本設定 ----------------
-st.set_page_config(page_title="相関と回帰の学習ツール", layout="wide")
-st.title("相関と回帰の学習ツール")
+st.set_page_config(page_title="Jリーグ分析ツール", layout="wide")
+st.title("Jリーグ分析ツール")
 st.caption("高校生向け：ファイルを読み込み、散布図と回帰、散布図行列を確認します。")
 
 # ---------------- タブの色（選択中のタブを色付け） ----------------
