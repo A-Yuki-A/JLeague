@@ -44,21 +44,6 @@ tab_css = """
 """
 st.markdown(tab_css, unsafe_allow_html=True)
 
-with st.expander("このツールでできること（最初に読んでください）", expanded=True):
-    st.markdown(
-        """
-- **目的変数**：予測したい量・結果のことです（例：売上）。
-- **説明変数**：目的変数に影響しそうな要因のことです（例：広告費）。
-- **手順**
-    1. 画面左の *ファイル読み込み* から、`.xlsx`（Excel）または`.csv`をアップロードします。
-    2. 「散布図と回帰」タブで、**目的変数**（縦軸）と **説明変数**（横軸）を選びます。
-       - 散布図の**下**に **回帰式**, **相関係数 r**, **決定係数 R²** を表示します。
-       - さらに、任意の **説明変数 x** を入力すると **予測 y** を表示します。
-    3. 「散布図行列」タブで、比較したい変数に☑を入れて、**散布図行列**を作ります。
-       - 各散布図セルに **回帰直線・回帰式・相関係数 r** を表示します（対角はヒストグラム）。
-        """
-    )
-
 # ---------------- サイドバー：ファイル読み込み ----------------
 st.sidebar.header("ファイル読み込み")
 uploaded = st.sidebar.file_uploader(
@@ -92,10 +77,10 @@ if df is not None:
 
         # ---------------- 散布図と回帰 ----------------
         with tab1:
-            st.markdown("**目的変数（縦軸）**：予測したい結果を選んでください。")
+            st.markdown("**目的変数（縦軸）**：結果を予測したい因子を選択")
             target_col = st.selectbox("目的変数を選択", options=numeric_cols, index=0, key="target")
 
-            st.markdown("**説明変数（横軸）**：目的に影響しそうな要因を1つ選んでください。")
+            st.markdown("**説明変数（横軸）**：目的に影響しそうな要因を選択")
             feature_candidates = [c for c in numeric_cols if c != target_col] or numeric_cols
             feature_col = st.selectbox("説明変数を選択", options=feature_candidates, index=0, key="feature")
 
@@ -119,13 +104,13 @@ if df is not None:
                     xx = np.linspace(np.min(x), np.max(x), 200)
                     yy = slope * xx + intercept
                     ax.plot(xx, yy)
-                    ax.set_xlabel(f"{feature_col}（説明変数：横軸）")
-                    ax.set_ylabel(f"{target_col}（目的変数：縦軸）")
+                    ax.set_xlabel(f"{feature_col}")
+                    ax.set_ylabel(f"{target_col}")
                     ax.set_title("散布図と回帰直線")
                     st.pyplot(fig, use_container_width=False)
 
                     # --- 散布図の下に、回帰情報を表示 ---
-                    st.markdown("#### 回帰の結果（散布図の下に表示）")
+                    st.markdown("#### 回帰の結果")
                     st.write(f"- 回帰式：  **y = {slope:.4g} × x + {intercept:.4g}**")
                     st.write(f"- 相関係数 r： **{r_value:.4f}**")
                     st.write(f"- 決定係数 R²： **{r2:.4f}**")
