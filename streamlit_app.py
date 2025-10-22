@@ -21,8 +21,8 @@ def setup_japanese_font():
 setup_japanese_font()
 
 # ---------------- 基本設定 ----------------
-st.set_page_config(page_title="Jリーグで勝点を取る", layout="wide")
-st.title("Jリーグで勝点を取る")
+st.set_page_config(page_title="相関と回帰の学習ツール", layout="wide")
+st.title("相関と回帰の学習ツール")
 st.caption("高校生向け：ファイルを読み込み、散布図と回帰、散布図行列を確認します。")
 
 # ---------------- タブの色（選択中のタブを色付け） ----------------
@@ -43,6 +43,21 @@ tab_css = """
 </style>
 """
 st.markdown(tab_css, unsafe_allow_html=True)
+
+with st.expander("このツールでできること（最初に読んでください）", expanded=True):
+    st.markdown(
+        """
+- **目的変数**：予測したい量・結果のことです（例：売上）。
+- **説明変数**：目的変数に影響しそうな要因のことです（例：広告費）。
+- **手順**
+    1. 画面左の *ファイル読み込み* から、`.xlsx`（Excel）または`.csv`をアップロードします。
+    2. 「散布図と回帰」タブで、**目的変数**（縦軸）と **説明変数**（横軸）を選びます。
+       - 散布図の**下**に **回帰式**, **相関係数 r**, **決定係数 R²** を表示します。
+       - さらに、任意の **説明変数 x** を入力すると **予測 y** を表示します。
+    3. 「散布図行列」タブで、比較したい変数に☑を入れて、**散布図行列**を作ります。
+       - 各散布図セルに **回帰直線・回帰式・相関係数 r** を表示します（対角はヒストグラム）。
+        """
+    )
 
 # ---------------- サイドバー：ファイル読み込み ----------------
 st.sidebar.header("ファイル読み込み")
@@ -98,19 +113,19 @@ if df is not None:
                     r_value = reg.rvalue
                     r2 = r_value ** 2
 
-                    # ◆ 散布図サイズを 2/3 に縮小（元 5.2×3.6 → 約 3.47×2.40 inch）
+                    # ◆ 散布図（2/3サイズ）
                     fig, ax = plt.subplots(figsize=(3.47, 2.40))
                     ax.scatter(x, y, s=22, alpha=0.85)
                     xx = np.linspace(np.min(x), np.max(x), 200)
                     yy = slope * xx + intercept
                     ax.plot(xx, yy)
-                    ax.set_xlabel(f"{feature_col}")
-                    ax.set_ylabel(f"{target_col}")
+                    ax.set_xlabel(f"{feature_col}（説明変数：横軸）")
+                    ax.set_ylabel(f"{target_col}（目的変数：縦軸）")
                     ax.set_title("散布図と回帰直線")
                     st.pyplot(fig, use_container_width=False)
 
-                    # --- 回帰情報を表示 ---
-                    st.markdown("#### 回帰の結果")
+                    # --- 散布図の下に、回帰情報を表示 ---
+                    st.markdown("#### 回帰の結果（散布図の下に表示）")
                     st.write(f"- 回帰式：  **y = {slope:.4g} × x + {intercept:.4g}**")
                     st.write(f"- 相関係数 r： **{r_value:.4f}**")
                     st.write(f"- 決定係数 R²： **{r2:.4f}**")
@@ -132,7 +147,7 @@ if df is not None:
                     y_pred = slope * x_input + intercept
                     st.success(f"予測された  **{target_col} (y)**  の値： **{y_pred:.6g}**")
 
-        # ---------------- 散布図行列（各セルに回帰直線・回帰式・rを表示） ----------------
+        # ---------------- 散布図行列（右上表記へ変更） ----------------
         with tab2:
             st.markdown("**散布図行列に含める変数に☑してください**（数値列のみ表示）。")
             default_cols = numeric_cols[:min(4, len(numeric_cols))]
@@ -147,7 +162,7 @@ if df is not None:
                     st.warning("有効なデータ点が少なすぎます。別の列を選んでください。")
                 else:
                     n = len(selected_cols)
-                    # 列数に応じてセルサイズを自動調整（見やすさ優先）
+                    # 列数に応じてセルサイズを自動調整
                     if n <= 3:
                         cell = 2.2
                     elif n <= 4:
@@ -158,23 +173,20 @@ if df is not None:
                         cell = 1.6
                     fig_w, fig_h = cell * n, cell * n
 
-                    # 先に軸を作成してから scatter_matrix を当てる
                     fig, axs = plt.subplots(n, n, figsize=(fig_w, fig_h))
                     axes = scatter_matrix(
                         plot_df, ax=axs, diagonal='hist', alpha=0.7, s=12
                     )
 
-                    # 各オフ対角セルに回帰直線・式・r を描画
+                    # 各オフ対角セルに回帰直線・式・r を描画（右上に注記）
                     for i, y_name in enumerate(selected_cols):      # 行（縦）= y
                         for j, x_name in enumerate(selected_cols):  # 列（横）= x
                             if i == j:
-                                # 対角はヒストグラムのまま
-                                continue
+                                continue  # 対角はヒストグラム
                             ax = axes[i, j]
                             x = plot_df[x_name].values
                             y = plot_df[y_name].values
 
-                            # 定数列などで回帰ができない場合はスキップ
                             if np.allclose(np.std(x), 0) or np.allclose(np.std(y), 0):
                                 continue
 
@@ -187,11 +199,11 @@ if df is not None:
                             yy = slope * xx + intercept
                             ax.plot(xx, yy, linewidth=1)
 
-                            # 簡潔な注記（左上に小さく）
+                            # ★ 右上に注記（ha='right', x=0.97, y=0.97）
                             eq = f"y={slope:.2g}x+{intercept:.2g}\nr={r:.2f}"
                             ax.text(
-                                0.03, 0.97, eq,
-                                transform=ax.transAxes, ha="left", va="top",
+                                0.97, 0.97, eq,
+                                transform=ax.transAxes, ha="right", va="top",
                                 fontsize=7, bbox=dict(boxstyle='round', alpha=0.08)
                             )
 
